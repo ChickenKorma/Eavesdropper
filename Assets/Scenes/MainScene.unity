@@ -255,10 +255,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 960, y: 540}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -475,6 +475,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e94f51b95a3c29428271da901e5764c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_caseContentLines: []
   m_topHitAction:
     m_Name: Top Hit
     m_Type: 1
@@ -509,6 +510,7 @@ MonoBehaviour:
       m_Action: Bottom Hit
       m_Flags: 0
     m_Flags: 0
+  m_debugText: {fileID: 0}
   m_wordObjectPrefab: {fileID: 3750350529162937748, guid: 8371969ee75f285419500f31b71f7942, type: 3}
   m_caseObjectPrefab: {fileID: 337532044222435279, guid: 2de45f9d55f22d443b46edc6a308e5f3, type: 3}
   m_endScreen: {fileID: 1051808502}
@@ -853,10 +855,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 960, y: 540}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3

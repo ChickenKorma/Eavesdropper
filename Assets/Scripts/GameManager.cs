@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -10,6 +9,9 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
 	public static GameManager Instance { get; private set; }
+
+	public string[] m_caseContentLines;
+	private int m_caseContentLinesIndex = 0;
 
 	public InputAction m_topHitAction;
 	public InputAction m_bottomHitAction;
@@ -35,8 +37,6 @@ public class GameManager : MonoBehaviour
 	[SerializeField] private TMP_Text m_caseText;
 	[SerializeField] private TMP_Text m_casesDoneText;
 
-	private StreamReader m_streamReader;
-
 	private int m_health;
 	private int m_casesDone;
 
@@ -57,8 +57,8 @@ public class GameManager : MonoBehaviour
 
 	private void Start()
 	{
-		string path = Application.streamingAssetsPath + m_caseContentFilePath;
-		m_streamReader = new(path);
+		TextAsset textAsset = Resources.Load<TextAsset>("caseContent");
+		m_caseContentLines = textAsset.text.Split('\n');
 
 		m_endScreen.SetActive(false);
 		BoxMoveSpeed = m_boxStartingSpeed;
@@ -97,11 +97,6 @@ public class GameManager : MonoBehaviour
 		m_bottomHitAction.performed -= OnBottomHit;
 	}
 
-	private void OnApplicationQuit()
-	{
-		m_streamReader?.Dispose();
-	}
-
 	private void OnTopHit(InputAction.CallbackContext context)
 	{
 		CheckForBoxHit(true);
@@ -137,7 +132,13 @@ public class GameManager : MonoBehaviour
 
 		yield return new WaitForEndOfFrame();
 
-		string caseContent = m_streamReader.ReadLine();
+		string caseContent = m_caseContentLines[m_caseContentLinesIndex];
+
+		m_caseContentLinesIndex++;
+
+		if (m_caseContentLinesIndex >= m_caseContentLines.Length)
+			m_caseContentLinesIndex = 0;
+
 		string[] caseWords = caseContent.Split(' ');
 
 		Instantiate(m_caseObjectPrefab).GetComponent<Case>().Setup(caseWords);
@@ -182,6 +183,8 @@ public class GameManager : MonoBehaviour
 		{
 			m_endScreen.SetActive(true);
 			m_casesDoneText.text = $"You solved {m_casesDone} cases";
+
+			Time.timeScale = 0;
 		}
 	}
 
@@ -191,8 +194,7 @@ public class GameManager : MonoBehaviour
 
 	public void RestartGame()
 	{
-		m_streamReader.Dispose();
-
+		Time.timeScale = 1;
 		SceneManager.LoadScene(1);
 	}
 }
