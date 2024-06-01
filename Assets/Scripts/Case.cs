@@ -63,6 +63,8 @@ public class Case : MonoBehaviour
 	{
 		Instance = null;
 
+		GameManager.Instance.PlayCaseDoneSound();
+
 		yield return new WaitForSeconds(1f);
 
 		Destroy(gameObject);

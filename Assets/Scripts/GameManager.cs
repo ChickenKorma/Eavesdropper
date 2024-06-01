@@ -37,6 +37,11 @@ public class GameManager : MonoBehaviour
 	[SerializeField] private TMP_Text m_caseText;
 	[SerializeField] private TMP_Text m_casesDoneText;
 
+	[SerializeField] private AudioSource m_gameEndAudioSource;
+	[SerializeField] private AudioSource m_wordSuccessAudioSource;
+	[SerializeField] private AudioSource m_wordFailureAudioSource;
+	[SerializeField] private AudioSource m_caseDoneAudioSource;
+
 	private int m_health;
 	private int m_casesDone;
 
@@ -183,6 +188,7 @@ public class GameManager : MonoBehaviour
 		{
 			m_endScreen.SetActive(true);
 			m_casesDoneText.text = $"You solved {m_casesDone} cases";
+			PlayGameEndSound();
 
 			Time.timeScale = 0;
 		}
@@ -197,4 +203,12 @@ public class GameManager : MonoBehaviour
 		Time.timeScale = 1;
 		SceneManager.LoadScene(1);
 	}
+
+	public void PlayWordSuccessSound() => m_wordSuccessAudioSource.Play();
+
+	public void PlayWordFailureSound() => m_wordFailureAudioSource.Play();
+
+	public void PlayGameEndSound() => m_gameEndAudioSource.Play();
+
+	public void PlayCaseDoneSound() => m_caseDoneAudioSource.Play();
 }

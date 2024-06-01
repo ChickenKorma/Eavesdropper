@@ -39,6 +39,7 @@ public class WordBox : MonoBehaviour
 			{
 				Case.Instance.WordDone(m_word, false);
 				GameManager.Instance.TakeDamage();
+				GameManager.Instance.PlayWordFailureSound();
 				Destroy(gameObject);
 			}
 		}
@@ -67,6 +68,7 @@ public class WordBox : MonoBehaviour
 		if (lookingForTopBox == m_isGoingRight && Mathf.Abs(m_wordRectTransform.anchoredPosition.x) <= (m_boxWidth / 2f) + 10)
 		{
 			Case.Instance.WordDone(m_word, true);
+			GameManager.Instance.PlayWordSuccessSound();
 			Destroy(gameObject);
 			return true;
 		}
