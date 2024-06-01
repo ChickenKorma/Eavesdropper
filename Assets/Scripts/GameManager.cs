@@ -156,7 +156,7 @@ public class GameManager : MonoBehaviour
 	{
 		while (m_stationaryWordBoxes.Count > 0)
 		{
-			bool sendRight = Random.Range(0, 1) == 1;
+			bool sendRight = Random.Range(0, 2) > 0.5;
 
 			m_stationaryWordBoxes[0].Setup(sendRight, m_stationaryWords[0]);
 
