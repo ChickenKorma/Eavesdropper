@@ -513,9 +513,9 @@ MonoBehaviour:
   m_caseObjectPrefab: {fileID: 337532044222435279, guid: 2de45f9d55f22d443b46edc6a308e5f3, type: 3}
   m_endScreen: {fileID: 1051808502}
   m_boxStartingSpeed: 150
-  m_boxAccelerationFactor: 0
+  m_boxAccelerationFactor: 3
   m_boxStartingSendTime: 2
-  m_boxSendTimeDecreaseFactor: 0
+  m_boxSendTimeDecreaseFactor: 0.04
   m_caseContentFilePath: /caseContent.txt
   m_healthText: {fileID: 1338722491}
   m_caseText: {fileID: 1922145330}

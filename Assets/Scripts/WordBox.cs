@@ -64,7 +64,7 @@ public class WordBox : MonoBehaviour
 
 	public bool OnTarget(bool lookingForTopBox)
 	{
-		if (lookingForTopBox == m_isGoingRight && Mathf.Abs(m_wordRectTransform.anchoredPosition.x) <= m_boxWidth / 2f)
+		if (lookingForTopBox == m_isGoingRight && Mathf.Abs(m_wordRectTransform.anchoredPosition.x) <= (m_boxWidth / 2f) + 10)
 		{
 			Case.Instance.WordDone(m_word, true);
 			Destroy(gameObject);

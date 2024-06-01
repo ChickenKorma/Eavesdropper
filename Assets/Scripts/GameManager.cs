@@ -45,6 +45,8 @@ public class GameManager : MonoBehaviour
 
 	List<WordBox> m_movingBoxes;
 
+	private float m_boxBias = 1;
+
 	private void Awake()
 	{
 		if (Instance != null)
@@ -74,7 +76,7 @@ public class GameManager : MonoBehaviour
 	void Update()
 	{
 		BoxMoveSpeed += m_boxAccelerationFactor * Time.deltaTime;
-		m_boxSendTime = Mathf.Clamp(m_boxSendTime - (m_boxSendTimeDecreaseFactor * Time.deltaTime), 0.1f, m_boxStartingSendTime);
+		m_boxSendTime = Mathf.Clamp(m_boxSendTime - (m_boxSendTimeDecreaseFactor * Time.deltaTime), 0.5f, m_boxStartingSendTime);
 	}
 
 	private void OnEnable()
@@ -156,7 +158,8 @@ public class GameManager : MonoBehaviour
 	{
 		while (m_stationaryWordBoxes.Count > 0)
 		{
-			bool sendRight = Random.Range(0, 2) > 0.5;
+			bool sendRight = Random.value > 0.5 * m_boxBias;
+			m_boxBias += sendRight ? 0.1f : -0.1f;
 
 			m_stationaryWordBoxes[0].Setup(sendRight, m_stationaryWords[0]);
 
@@ -190,7 +193,6 @@ public class GameManager : MonoBehaviour
 	{
 		m_streamReader.Dispose();
 
-		string currentSceneName = SceneManager.GetActiveScene().name;
-		SceneManager.LoadScene(currentSceneName);
+		SceneManager.LoadScene(1);
 	}
 }
