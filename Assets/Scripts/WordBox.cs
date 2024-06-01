@@ -47,7 +47,7 @@ public class WordBox : MonoBehaviour
 
 	public void Setup(bool goingRight, string word)
 	{
-		m_wordRectTransform.anchoredPosition = goingRight ? new Vector2(-620, 0) : new Vector2(620, -55);
+		m_wordRectTransform.anchoredPosition = goingRight ? new Vector2(-620, -45) : new Vector2(620, -165);
 
 		m_isGoingRight = goingRight;
 

@@ -28,7 +28,7 @@ public class Case : MonoBehaviour
 
 		for (int i = 0; i < m_words.Length; i++)
 		{
-			GameObject caseWord = Instantiate(m_wordObjectPrefab, transform);
+			GameObject caseWord = Instantiate(m_wordObjectPrefab, transform.GetChild(0));
 
 			m_wordObjects[i] = caseWord.GetComponent<TMP_Text>();
 		}
