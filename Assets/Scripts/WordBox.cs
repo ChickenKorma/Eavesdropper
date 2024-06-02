@@ -21,6 +21,8 @@ public class WordBox : MonoBehaviour
 
 	private string m_word;
 
+	private bool m_failed;
+
 	private void Awake()
 	{
 		m_wordRectTransform = transform.GetChild(0).GetComponent<RectTransform>();
@@ -33,16 +35,38 @@ public class WordBox : MonoBehaviour
 	{
 		if (m_moving)
 		{
-			m_wordRectTransform.anchoredPosition += m_moveDirection * Time.deltaTime * GameManager.Instance.BoxMoveSpeed;
+			m_wordRectTransform.anchoredPosition += GameManager.Instance.BoxMoveSpeed * Time.deltaTime * m_moveDirection;
 
-			if ((m_isGoingRight && m_wordRectTransform.anchoredPosition.x > m_endPoint) || (!m_isGoingRight && m_wordRectTransform.anchoredPosition.x < m_endPoint))
+			float xPos = m_wordRectTransform.anchoredPosition.x;
+
+			if (!m_failed && IsPastMiddle(xPos))
 			{
 				Case.Instance.WordDone(m_word, false);
 				GameManager.Instance.TakeDamage();
 				GameManager.Instance.PlayWordFailureSound();
+				m_failed = true;
+			}
+			else if (m_failed && IsAtEnd(xPos))
+			{
 				Destroy(gameObject);
 			}
 		}
+	}
+
+	private bool IsPastMiddle(float xPos)
+	{
+		if (m_isGoingRight)
+			return xPos > m_endPoint;
+		else
+			return xPos < m_endPoint;
+	}
+
+	private bool IsAtEnd(float xPos)
+	{
+		if (m_isGoingRight)
+			return xPos > 330;
+		else
+			return xPos < -330;
 	}
 
 	public void Setup(bool goingRight, string word)

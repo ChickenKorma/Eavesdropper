@@ -16,6 +16,8 @@ public class GameManager : MonoBehaviour
 	public InputAction m_topHitAction;
 	public InputAction m_bottomHitAction;
 
+	private float m_lastDamageTime = 0;
+
 	public float BoxMoveSpeed { get; private set; }
 
 	[SerializeField] private GameObject m_wordObjectPrefab;
@@ -30,8 +32,6 @@ public class GameManager : MonoBehaviour
 	[SerializeField] private float m_boxAccelerationFactor;
 	[SerializeField] private float m_boxStartingSendTime;
 	[SerializeField] private float m_boxSendTimeDecreaseFactor;
-
-	[SerializeField] private string m_caseContentFilePath;
 
 	[SerializeField] private TMP_Text m_healthText;
 	[SerializeField] private TMP_Text m_caseText;
@@ -81,7 +81,7 @@ public class GameManager : MonoBehaviour
 	void Update()
 	{
 		BoxMoveSpeed += m_boxAccelerationFactor * Time.deltaTime;
-		m_boxSendTime = Mathf.Clamp(m_boxSendTime - (m_boxSendTimeDecreaseFactor * Time.deltaTime), 0.5f, m_boxStartingSendTime);
+		m_boxSendTime = Mathf.Clamp(m_boxSendTime - (m_boxSendTimeDecreaseFactor * Time.deltaTime), 0.4f, m_boxStartingSendTime);
 	}
 
 	private void OnEnable()
@@ -138,7 +138,6 @@ public class GameManager : MonoBehaviour
 		yield return new WaitForEndOfFrame();
 
 		string caseContent = m_caseContentLines[m_caseContentLinesIndex];
-
 		m_caseContentLinesIndex++;
 
 		if (m_caseContentLinesIndex >= m_caseContentLines.Length)
@@ -164,7 +163,7 @@ public class GameManager : MonoBehaviour
 	{
 		while (m_stationaryWordBoxes.Count > 0)
 		{
-			bool sendRight = Random.value > 0.5 * m_boxBias;
+			bool sendRight = Random.value > 0.5f * m_boxBias;
 			m_boxBias += sendRight ? 0.1f : -0.1f;
 
 			m_stationaryWordBoxes[0].Setup(sendRight, m_stationaryWords[0]);
@@ -180,21 +179,26 @@ public class GameManager : MonoBehaviour
 
 	public void TakeDamage()
 	{
-		m_health -= 1;
-
-		UpdateHealthText();
-
-		if (m_health <= 0)
+		if (Time.time > m_lastDamageTime + 0.1f)
 		{
-			m_endScreen.SetActive(true);
-			m_casesDoneText.text = $"You solved {m_casesDone} cases";
-			PlayGameEndSound();
+			m_lastDamageTime = Time.time;
 
-			Time.timeScale = 0;
+			m_health -= 1;
+
+			UpdateHealthText();
+
+			if (m_health <= 0)
+			{
+				m_endScreen.SetActive(true);
+				m_casesDoneText.text = $"You solved {m_casesDone} cases";
+				PlayGameEndSound();
+
+				Time.timeScale = 0;
+			}
 		}
 	}
 
-	private void UpdateHealthText() => m_healthText.text = $"Health: {m_health}";
+	private void UpdateHealthText() => m_healthText.text = $"Lives: {m_health}";
 
 	private void UpdateCaseText() => m_caseText.text = $"Case #{m_casesDone + 1}";
 

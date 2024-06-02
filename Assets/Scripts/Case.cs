@@ -31,6 +31,15 @@ public class Case : MonoBehaviour
 			GameObject caseWord = Instantiate(m_wordObjectPrefab, transform.GetChild(0));
 
 			m_wordObjects[i] = caseWord.GetComponent<TMP_Text>();
+
+			string blankText = "";
+
+			foreach (char c in m_words[i])
+			{
+				blankText += "-";
+			}
+
+			m_wordObjects[i].text = blankText;
 		}
 
 		StartCoroutine(ApplyLayout());
