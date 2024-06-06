@@ -4,24 +4,27 @@ using UnityEngine;
 
 public class WordBox : MonoBehaviour
 {
+	#region Variables
+
 	private RectTransform m_wordRectTransform;
 
+	private bool m_isTopTrack;
+
 	private Vector2 m_moveDirection;
-
-	private float m_boxWidth;
-
-	private bool m_isGoingRight;
-
-	private float m_endPoint;
-
-	private TMP_Text m_boxText;
-	private TMP_Text m_boxSecondText;
-
 	private bool m_moving;
 
+	private float m_endPoint;
+	private float m_boxCenterRange;
+
+	private TMP_Text m_boxText;
+	private TMP_Text m_boxSecondText; // Two text objects, first influences the box size and the second is copied on top to show word
 	private string m_word;
 
 	private bool m_failed;
+
+	#endregion
+
+	#region Unity
 
 	private void Awake()
 	{
@@ -53,9 +56,41 @@ public class WordBox : MonoBehaviour
 		}
 	}
 
+	#endregion
+
+	#region Setup
+
+	public void Setup(bool isTopTrack, string word)
+	{
+		m_isTopTrack = isTopTrack;
+		m_wordRectTransform.anchoredPosition = isTopTrack ? new Vector2(-620, -45) : new Vector2(620, -165);
+		m_moveDirection = new Vector2(isTopTrack ? 1 : -1, 0);
+
+		m_word = word;
+		m_boxText.text = word;
+		m_boxSecondText.text = word;
+
+		StartCoroutine(UpdateSize());
+	}
+
+	private IEnumerator UpdateSize()
+	{
+		yield return new WaitForEndOfFrame();
+
+		float boxWidth = m_wordRectTransform.rect.width;
+		m_endPoint = m_isTopTrack ? (boxWidth / 2f) + 20 : (-boxWidth / 2f) - 20;
+		m_boxCenterRange = (boxWidth / 2f) + 10;
+
+		m_moving = true;
+	}
+
+	#endregion
+
+	#region Position checks
+
 	private bool IsPastMiddle(float xPos)
 	{
-		if (m_isGoingRight)
+		if (m_isTopTrack)
 			return xPos > m_endPoint;
 		else
 			return xPos < m_endPoint;
@@ -63,33 +98,15 @@ public class WordBox : MonoBehaviour
 
 	private bool IsAtEnd(float xPos)
 	{
-		if (m_isGoingRight)
+		if (m_isTopTrack)
 			return xPos > 330;
 		else
 			return xPos < -330;
 	}
 
-	public void Setup(bool goingRight, string word)
+	public bool OnTarget(bool checkTopTrack)
 	{
-		m_wordRectTransform.anchoredPosition = goingRight ? new Vector2(-620, -45) : new Vector2(620, -165);
-
-		m_isGoingRight = goingRight;
-
-		m_moveDirection = new Vector2(m_isGoingRight ? 1 : -1, 0);
-
-		m_boxText.text = word;
-		m_boxSecondText.text = word;
-
-		m_word = word;
-
-		m_boxWidth = 1.6f;
-
-		StartCoroutine(UpdateSize());
-	}
-
-	public bool OnTarget(bool lookingForTopBox)
-	{
-		if (lookingForTopBox == m_isGoingRight && Mathf.Abs(m_wordRectTransform.anchoredPosition.x) <= (m_boxWidth / 2f) + 10)
+		if (checkTopTrack == m_isTopTrack && Mathf.Abs(m_wordRectTransform.anchoredPosition.x) <= m_boxCenterRange)
 		{
 			Case.Instance.WordDone(m_word, true);
 			GameManager.Instance.PlayWordSuccessSound();
@@ -100,13 +117,5 @@ public class WordBox : MonoBehaviour
 		return false;
 	}
 
-	private IEnumerator UpdateSize()
-	{
-		yield return new WaitForEndOfFrame();
-
-		m_boxWidth = m_wordRectTransform.rect.width;
-		m_endPoint = m_isGoingRight ? (m_boxWidth / 2f) + 20 : (-m_boxWidth / 2f) - 20;
-
-		m_moving = true;
-	}
+	#endregion
 }

@@ -5,13 +5,18 @@ using UnityEngine;
 
 public class Case : MonoBehaviour
 {
+	#region Variables
+
 	public static Case Instance { get; private set; }
 
-	private string[] m_words;
+	[SerializeField] private GameObject m_wordObjectPrefab;
 
+	private string[] m_words;
 	private TMP_Text[] m_wordObjects;
 
-	[SerializeField] private GameObject m_wordObjectPrefab;
+	#endregion
+
+	#region Unity
 
 	private void Awake()
 	{
@@ -20,6 +25,10 @@ public class Case : MonoBehaviour
 		else
 			Instance = this;
 	}
+
+	#endregion
+
+	#region Setup
 
 	public void Setup(string[] words)
 	{
@@ -50,13 +59,17 @@ public class Case : MonoBehaviour
 		yield return new WaitForEndOfFrame();
 
 		string text = m_wordObjects[0].text;
-		m_wordObjects[0].text = "awfaw";
+		m_wordObjects[0].text = "grdg";
 		m_wordObjects[0].text = text;
 	}
 
+	#endregion
+
+	#region Logic
+
 	public void WordDone(string word, bool success)
 	{
-		int wordIndex = Array.IndexOf(m_words, word);
+		int wordIndex = Array.LastIndexOf(m_words, word);
 
 		if (wordIndex == -1)
 			return;
@@ -77,6 +90,8 @@ public class Case : MonoBehaviour
 		yield return new WaitForSeconds(1f);
 
 		Destroy(gameObject);
-		GameManager.Instance.StartCoroutine(GameManager.Instance.NewCase());
+		GameManager.Instance.NewCase();
 	}
+
+	#endregion
 }

@@ -8,30 +8,25 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-	public static GameManager Instance { get; private set; }
+	#region Variables
 
-	public string[] m_caseContentLines;
-	private int m_caseContentLinesIndex = 0;
+	public static GameManager Instance { get; private set; }
 
 	public InputAction m_topHitAction;
 	public InputAction m_bottomHitAction;
 
-	private float m_lastDamageTime = 0;
-
-	public float BoxMoveSpeed { get; private set; }
-
-	[SerializeField] private GameObject m_wordObjectPrefab;
-
-	private float m_boxSendTime;
-
-	[SerializeField] private GameObject m_caseObjectPrefab;
+	[SerializeField] private GameObject m_casePrefab;
+	[SerializeField] private GameObject m_wordBoxPrefab;
 
 	[SerializeField] private GameObject m_endScreen;
 
+	public float BoxMoveSpeed { get; private set; }
 	[SerializeField] private float m_boxStartingSpeed;
 	[SerializeField] private float m_boxAccelerationFactor;
+
 	[SerializeField] private float m_boxStartingSendTime;
 	[SerializeField] private float m_boxSendTimeDecreaseFactor;
+	private float m_boxSendTime;
 
 	[SerializeField] private TMP_Text m_healthText;
 	[SerializeField] private TMP_Text m_caseText;
@@ -41,16 +36,27 @@ public class GameManager : MonoBehaviour
 	[SerializeField] private AudioSource m_wordSuccessAudioSource;
 	[SerializeField] private AudioSource m_wordFailureAudioSource;
 	[SerializeField] private AudioSource m_caseDoneAudioSource;
+	[SerializeField] private AudioSource m_musicAudioSource;
 
-	private int m_health;
-	private int m_casesDone;
+	private int m_health = 3;
+	private float m_lastDamageTime = 0;
 
-	List<WordBox> m_stationaryWordBoxes;
+	private const string s_caseContentResourceName = "caseContent";
+
+	public string[] m_caseContentLines;
+	private int m_caseContentLinesIndex = 0;
+	private int m_casesDone = -1; // Starts at -1 so the initial NewCase() puts this to 0
+	private float m_caseStartTime = 0;
+
 	List<string> m_stationaryWords;
-
-	List<WordBox> m_movingBoxes;
+	List<WordBox> m_stationaryWordBoxes;
+	List<WordBox> m_movingWordBoxes;
 
 	private float m_boxBias = 1;
+
+	#endregion
+
+	#region Unity
 
 	private void Awake()
 	{
@@ -62,26 +68,18 @@ public class GameManager : MonoBehaviour
 
 	private void Start()
 	{
-		TextAsset textAsset = Resources.Load<TextAsset>("caseContent");
+		TextAsset textAsset = Resources.Load<TextAsset>(s_caseContentResourceName);
 		m_caseContentLines = textAsset.text.Split('\n');
 
 		m_endScreen.SetActive(false);
+
 		BoxMoveSpeed = m_boxStartingSpeed;
 		m_boxSendTime = m_boxStartingSendTime;
-
-		m_casesDone = -1;
-		m_health = 3;
 
 		UpdateHealthText();
 		UpdateCaseText();
 
-		StartCoroutine(NewCase());
-	}
-
-	void Update()
-	{
-		BoxMoveSpeed += m_boxAccelerationFactor * Time.deltaTime;
-		m_boxSendTime = Mathf.Clamp(m_boxSendTime - (m_boxSendTimeDecreaseFactor * Time.deltaTime), 0.4f, m_boxStartingSendTime);
+		NewCase();
 	}
 
 	private void OnEnable()
@@ -102,40 +100,42 @@ public class GameManager : MonoBehaviour
 		m_bottomHitAction.performed -= OnBottomHit;
 	}
 
-	private void OnTopHit(InputAction.CallbackContext context)
-	{
-		CheckForBoxHit(true);
-	}
+	#endregion
 
-	private void OnBottomHit(InputAction.CallbackContext context)
-	{
-		CheckForBoxHit(false);
-	}
+	#region Inputs
 
-	private void CheckForBoxHit(bool checkingTopBoxes)
+	private void OnTopHit(InputAction.CallbackContext context) => CheckForBoxHit(true);
+
+	private void OnBottomHit(InputAction.CallbackContext context) => CheckForBoxHit(false);
+
+	private void CheckForBoxHit(bool checkTopBoxes)
 	{
 		bool hitSomething = false;
 
-		if (m_movingBoxes != null)
-		{
-			for (int i = 0; i < m_movingBoxes.Count; i++)
-			{
-				if (m_movingBoxes[i] != null)
-					if (m_movingBoxes[i].OnTarget(checkingTopBoxes))
+		if (m_movingWordBoxes != null)
+			for (int i = 0; i < m_movingWordBoxes.Count; i++)
+				if (m_movingWordBoxes[i] != null)
+					if (m_movingWordBoxes[i].OnTarget(checkTopBoxes))
 						hitSomething = true;
-			}
-		}
 
 		if (!hitSomething)
 			TakeDamage();
 	}
 
-	public IEnumerator NewCase()
+	#endregion
+
+	#region Case/Words handling
+
+	public void NewCase()
 	{
 		m_casesDone++;
 		UpdateCaseText();
 
-		yield return new WaitForEndOfFrame();
+		BoxMoveSpeed += m_boxAccelerationFactor * (Time.time - m_caseStartTime);
+		m_boxSendTime = Mathf.Clamp(m_boxSendTime - (Time.time - m_caseStartTime), 0.4f, m_boxStartingSendTime);
+		m_musicAudioSource.pitch = Mathf.Clamp((0.1f * (BoxMoveSpeed - m_boxStartingSpeed) + m_boxStartingSpeed) / m_boxStartingSpeed, 1f, 3f);
+
+		m_caseStartTime = Time.time;
 
 		string caseContent = m_caseContentLines[m_caseContentLinesIndex];
 		m_caseContentLinesIndex++;
@@ -145,15 +145,15 @@ public class GameManager : MonoBehaviour
 
 		string[] caseWords = caseContent.Split(' ');
 
-		Instantiate(m_caseObjectPrefab).GetComponent<Case>().Setup(caseWords);
+		Instantiate(m_casePrefab).GetComponent<Case>().Setup(caseWords);
 
-		m_movingBoxes = new List<WordBox>();
+		m_movingWordBoxes = new List<WordBox>();
 		m_stationaryWordBoxes = new List<WordBox>();
 		m_stationaryWords = caseWords.ToList();
 
 		for (int i = 0; i < caseWords.Length; i++)
 		{
-			m_stationaryWordBoxes.Add(Instantiate(m_wordObjectPrefab).GetComponent<WordBox>());
+			m_stationaryWordBoxes.Add(Instantiate(m_wordBoxPrefab).GetComponent<WordBox>());
 		}
 
 		StartCoroutine(SendBoxes());
@@ -163,19 +163,23 @@ public class GameManager : MonoBehaviour
 	{
 		while (m_stationaryWordBoxes.Count > 0)
 		{
-			bool sendRight = Random.value > 0.5f * m_boxBias;
-			m_boxBias += sendRight ? 0.1f : -0.1f;
+			bool isTopTrack = Random.value > 0.5f * m_boxBias;
+			m_boxBias += isTopTrack ? 0.1f : -0.1f;
 
-			m_stationaryWordBoxes[0].Setup(sendRight, m_stationaryWords[0]);
+			m_stationaryWordBoxes[0].Setup(isTopTrack, m_stationaryWords[0]);
 
-			m_movingBoxes.Add(m_stationaryWordBoxes[0]);
+			m_movingWordBoxes.Add(m_stationaryWordBoxes[0]);
 
 			m_stationaryWords.RemoveAt(0);
 			m_stationaryWordBoxes.RemoveAt(0);
 
-			yield return new WaitForSeconds(Random.Range(m_boxSendTime - 0.15f, m_boxSendTime + 0.15f));
+			yield return new WaitForSeconds(Random.Range(m_boxSendTime - 0.05f, m_boxSendTime + 0.05f));
 		}
 	}
+
+	#endregion
+
+	#region Game systems handling
 
 	public void TakeDamage()
 	{
@@ -183,7 +187,7 @@ public class GameManager : MonoBehaviour
 		{
 			m_lastDamageTime = Time.time;
 
-			m_health -= 1;
+			m_health--;
 
 			UpdateHealthText();
 
@@ -205,8 +209,12 @@ public class GameManager : MonoBehaviour
 	public void RestartGame()
 	{
 		Time.timeScale = 1;
-		SceneManager.LoadScene(1);
+		SceneManager.LoadScene(1); // Reload this scene
 	}
+
+	#endregion
+
+	#region Audio
 
 	public void PlayWordSuccessSound() => m_wordSuccessAudioSource.Play();
 
@@ -215,4 +223,6 @@ public class GameManager : MonoBehaviour
 	public void PlayGameEndSound() => m_gameEndAudioSource.Play();
 
 	public void PlayCaseDoneSound() => m_caseDoneAudioSource.Play();
+
+	#endregion
 }
