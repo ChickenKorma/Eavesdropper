@@ -70,13 +70,13 @@ public class GameManager : MonoBehaviour
 	private void Start()
 	{
 		TextAsset textAsset = Resources.Load<TextAsset>(s_caseContentResourceName);
-		//m_caseContentLines = textAsset.text.Split('\n');
 		m_caseContentLines = RandomizeArray(textAsset.text.Split('\n'));
 
 		m_endScreen.SetActive(false);
 
 		BoxMoveSpeed = m_boxStartingSpeed;
 		m_boxSendTime = m_boxStartingSendTime;
+		m_musicAudioSource.pitch = 1f;
 
 		UpdateHealthText();
 
@@ -131,8 +131,8 @@ public class GameManager : MonoBehaviour
 	{
 		m_casesDone++;
 
-		BoxMoveSpeed += m_boxAccelerationFactor * (Time.time - m_caseStartTime);
-		m_boxSendTime = Mathf.Clamp(m_boxSendTime - ((Time.time - m_caseStartTime) * m_boxSendTimeDecreaseFactor), 0.3f, m_boxStartingSendTime);
+		BoxMoveSpeed += m_boxAccelerationFactor * (Time.timeSinceLevelLoad - m_caseStartTime);
+		m_boxSendTime = Mathf.Clamp(m_boxSendTime - ((Time.timeSinceLevelLoad - m_caseStartTime) * m_boxSendTimeDecreaseFactor), 0.3f, m_boxStartingSendTime);
 		m_musicAudioSource.pitch = Mathf.Clamp((0.1f * (BoxMoveSpeed - m_boxStartingSpeed) + m_boxStartingSpeed) / m_boxStartingSpeed, 1f, 3f);
 
 		m_caseStartTime = Time.time;
