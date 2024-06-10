@@ -1,3 +1,4 @@
+using DG.Tweening;
 using System;
 using System.Collections;
 using TMPro;
@@ -30,14 +31,16 @@ public class Case : MonoBehaviour
 
 	#region Setup
 
-	public void Setup(string[] words)
+	public void Setup(string[] words, int caseNumber)
 	{
 		m_words = words;
 		m_wordObjects = new TMP_Text[m_words.Length];
 
+		Transform panelTransform = transform.GetChild(0).GetChild(1);
+
 		for (int i = 0; i < m_words.Length; i++)
 		{
-			GameObject caseWord = Instantiate(m_wordObjectPrefab, transform.GetChild(0));
+			GameObject caseWord = Instantiate(m_wordObjectPrefab, panelTransform);
 
 			m_wordObjects[i] = caseWord.GetComponent<TMP_Text>();
 
@@ -51,6 +54,8 @@ public class Case : MonoBehaviour
 			m_wordObjects[i].text = blankText;
 		}
 
+		transform.GetChild(0).GetChild(0).GetChild(0).GetComponent<TMP_Text>().text = $"Case #{caseNumber}";
+
 		StartCoroutine(ApplyLayout());
 	}
 
@@ -58,9 +63,8 @@ public class Case : MonoBehaviour
 	{
 		yield return new WaitForEndOfFrame();
 
-		string text = m_wordObjects[0].text;
-		m_wordObjects[0].text = "grdg";
-		m_wordObjects[0].text = text;
+		FlowLayoutGroup flowLayoutGroup = transform.GetChild(0).GetChild(1).GetComponent<FlowLayoutGroup>();
+		flowLayoutGroup.SetLayoutHorizontal();
 	}
 
 	#endregion
@@ -75,7 +79,19 @@ public class Case : MonoBehaviour
 			return;
 
 		if (success)
-			m_wordObjects[wordIndex].text = m_words[wordIndex];
+		{
+			DOTweenTMPAnimator animator = new(m_wordObjects[wordIndex]);
+			Sequence sequence = DOTween.Sequence();
+
+			for (int i = 0; i < animator.textInfo.characterCount; i++)
+			{
+				if (!animator.textInfo.characterInfo[i].isVisible) continue;
+
+				sequence.Append(animator.DOPunchCharScale(i, 0.5f, 0.06f));
+			}
+
+			m_wordObjects[wordIndex].DOText(word, word.Length * 0.06f);
+		}
 
 		if (wordIndex == m_words.Length - 1)
 			StartCoroutine(EndCase());
@@ -86,10 +102,13 @@ public class Case : MonoBehaviour
 		Instance = null;
 
 		GameManager.Instance.PlayCaseDoneSound();
+		transform.GetChild(0).GetComponent<RectTransform>().DOPunchScale(new(0.05f, 0.05f), 0.2f);
 
 		yield return new WaitForSeconds(1f);
 
+		gameObject.SetActive(false);
 		Destroy(gameObject);
+
 		GameManager.Instance.NewCase();
 	}
 

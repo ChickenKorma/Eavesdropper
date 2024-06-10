@@ -1,3 +1,4 @@
+using DG.Tweening;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -46,8 +47,9 @@ public class WordBox : MonoBehaviour
 			{
 				Case.Instance.WordDone(m_word, false);
 				GameManager.Instance.TakeDamage();
-				GameManager.Instance.PlayWordFailureSound();
 				m_failed = true;
+
+				m_wordRectTransform.DOPunchScale(new Vector3(-0.2f, -0.1f, 0), 0.5f, 5, 0.3f);
 			}
 			else if (m_failed && IsAtEnd(xPos))
 			{
@@ -110,7 +112,10 @@ public class WordBox : MonoBehaviour
 		{
 			Case.Instance.WordDone(m_word, true);
 			GameManager.Instance.PlayWordSuccessSound();
-			Destroy(gameObject);
+
+			m_wordRectTransform.DOPunchScale(new(0.5f, 0.5f, 0), 0.5f, 6, 0.35f).OnComplete(() => Destroy(gameObject));
+
+			m_failed = true;
 			return true;
 		}
 

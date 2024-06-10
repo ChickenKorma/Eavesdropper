@@ -1,3 +1,5 @@
+using DG.Tweening;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,7 +31,6 @@ public class GameManager : MonoBehaviour
 	private float m_boxSendTime;
 
 	[SerializeField] private TMP_Text m_healthText;
-	[SerializeField] private TMP_Text m_caseText;
 	[SerializeField] private TMP_Text m_casesDoneText;
 
 	[SerializeField] private AudioSource m_gameEndAudioSource;
@@ -38,7 +39,7 @@ public class GameManager : MonoBehaviour
 	[SerializeField] private AudioSource m_caseDoneAudioSource;
 	[SerializeField] private AudioSource m_musicAudioSource;
 
-	private int m_health = 3;
+	private int m_health = 5;
 	private float m_lastDamageTime = 0;
 
 	private const string s_caseContentResourceName = "caseContent";
@@ -69,7 +70,8 @@ public class GameManager : MonoBehaviour
 	private void Start()
 	{
 		TextAsset textAsset = Resources.Load<TextAsset>(s_caseContentResourceName);
-		m_caseContentLines = textAsset.text.Split('\n');
+		//m_caseContentLines = textAsset.text.Split('\n');
+		m_caseContentLines = RandomizeArray(textAsset.text.Split('\n'));
 
 		m_endScreen.SetActive(false);
 
@@ -77,7 +79,6 @@ public class GameManager : MonoBehaviour
 		m_boxSendTime = m_boxStartingSendTime;
 
 		UpdateHealthText();
-		UpdateCaseText();
 
 		NewCase();
 	}
@@ -129,10 +130,9 @@ public class GameManager : MonoBehaviour
 	public void NewCase()
 	{
 		m_casesDone++;
-		UpdateCaseText();
 
 		BoxMoveSpeed += m_boxAccelerationFactor * (Time.time - m_caseStartTime);
-		m_boxSendTime = Mathf.Clamp(m_boxSendTime - (Time.time - m_caseStartTime), 0.4f, m_boxStartingSendTime);
+		m_boxSendTime = Mathf.Clamp(m_boxSendTime - ((Time.time - m_caseStartTime) * m_boxSendTimeDecreaseFactor), 0.3f, m_boxStartingSendTime);
 		m_musicAudioSource.pitch = Mathf.Clamp((0.1f * (BoxMoveSpeed - m_boxStartingSpeed) + m_boxStartingSpeed) / m_boxStartingSpeed, 1f, 3f);
 
 		m_caseStartTime = Time.time;
@@ -143,9 +143,10 @@ public class GameManager : MonoBehaviour
 		if (m_caseContentLinesIndex >= m_caseContentLines.Length)
 			m_caseContentLinesIndex = 0;
 
-		string[] caseWords = caseContent.Split(' ');
+		string trimmedCaseContent = caseContent.TrimEnd('\r');
+		string[] caseWords = trimmedCaseContent.Split(' ');
 
-		Instantiate(m_casePrefab).GetComponent<Case>().Setup(caseWords);
+		Instantiate(m_casePrefab).GetComponent<Case>().Setup(caseWords, m_casesDone + 1);
 
 		m_movingWordBoxes = new List<WordBox>();
 		m_stationaryWordBoxes = new List<WordBox>();
@@ -163,7 +164,7 @@ public class GameManager : MonoBehaviour
 	{
 		while (m_stationaryWordBoxes.Count > 0)
 		{
-			bool isTopTrack = Random.value > 0.5f * m_boxBias;
+			bool isTopTrack = UnityEngine.Random.value > 0.5f * m_boxBias;
 			m_boxBias += isTopTrack ? 0.1f : -0.1f;
 
 			m_stationaryWordBoxes[0].Setup(isTopTrack, m_stationaryWords[0]);
@@ -173,7 +174,7 @@ public class GameManager : MonoBehaviour
 			m_stationaryWords.RemoveAt(0);
 			m_stationaryWordBoxes.RemoveAt(0);
 
-			yield return new WaitForSeconds(Random.Range(m_boxSendTime - 0.05f, m_boxSendTime + 0.05f));
+			yield return new WaitForSeconds(UnityEngine.Random.Range(m_boxSendTime - 0.05f, m_boxSendTime + 0.05f));
 		}
 	}
 
@@ -189,13 +190,17 @@ public class GameManager : MonoBehaviour
 
 			m_health--;
 
+			PlayWordFailureSound();
+
 			UpdateHealthText();
+			m_healthText.transform.DOShakePosition(0.5f, 2.5f);
 
 			if (m_health <= 0)
 			{
 				m_endScreen.SetActive(true);
 				m_casesDoneText.text = $"You solved {m_casesDone} cases";
 				PlayGameEndSound();
+				m_musicAudioSource.Stop();
 
 				Time.timeScale = 0;
 			}
@@ -204,12 +209,15 @@ public class GameManager : MonoBehaviour
 
 	private void UpdateHealthText() => m_healthText.text = $"Lives: {m_health}";
 
-	private void UpdateCaseText() => m_caseText.text = $"Case #{m_casesDone + 1}";
-
 	public void RestartGame()
 	{
 		Time.timeScale = 1;
 		SceneManager.LoadScene(1); // Reload this scene
+	}
+
+	public void QuitGame()
+	{
+		Application.Quit();
 	}
 
 	#endregion
@@ -223,6 +231,13 @@ public class GameManager : MonoBehaviour
 	public void PlayGameEndSound() => m_gameEndAudioSource.Play();
 
 	public void PlayCaseDoneSound() => m_caseDoneAudioSource.Play();
+
+	#endregion
+
+	#region Helper methods
+
+	public static string[] RandomizeArray(string[] array) =>
+	array.OrderBy(x => Guid.NewGuid()).ToArray();
 
 	#endregion
 }
